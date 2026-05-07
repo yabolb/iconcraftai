@@ -1,0 +1,364 @@
+# Plan de QA & Prevención de Bugs — IconCraft AI
+
+Plan integral para garantizar la calidad del código, la estabilidad del producto y la prevención de regresiones en todas las capas de IconCraft AI.
+
+---
+
+## Contexto
+
+IconCraft AI es un motor universal de iconografía que transforma un vector base en activos optimizados para múltiples Design Systems (Material, iOS/SF Symbols, Fluent, Custom). El producto tiene superficies de riesgo críticas:
+
+- **Precisión geométrica** — errores de 1px destruyen el valor del producto
+- **Consistencia cross-platform** — el mismo icono debe ser correcto en N sistemas
+- **Integridad de exportación** — los archivos generados (SVG, TTF, WOFF2, código nativo) deben ser válidos
+- **Transacciones de pago** — no se pueden entregar activos sin cobrar, ni cobrar sin entregar
+
+---
+
+## Arquitectura de Testing Propuesta
+
+```mermaid
+graph TD
+    A["Unit Tests<br/>(Motor Geométrico)"] --> B["Integration Tests<br/>(Pipeline SVG → Export)"]
+    B --> C["Conformance Tests<br/>(Design System Validation)"]
+    C --> D["UI/E2E Tests<br/>(Workbench Artifact)"]
+    D --> E["Transaction Tests<br/>(Pago + Entrega)"]
+    E --> F["CI/CD Gates<br/>(Quality Checks)"]
+    
+    style A fill:#1a1a2e,stroke:#e94560,color:#fff
+    style B fill:#1a1a2e,stroke:#0f3460,color:#fff
+    style C fill:#1a1a2e,stroke:#533483,color:#fff
+    style D fill:#1a1a2e,stroke:#e94560,color:#fff
+    style E fill:#1a1a2e,stroke:#0f3460,color:#fff
+    style F fill:#1a1a2e,stroke:#533483,color:#fff
+```
+
+---
+
+## Capa 1: Unit Tests — Motor de Transformación Geométrica
+
+El corazón del producto. Aquí es donde los bugs son más costosos y más silenciosos.
+
+### Qué testar
+
+| Módulo | Tests críticos | Riesgo si falla |
+|:---|:---|:---|
+| **Grid Mapper** | Remap de coordenadas a grid 24×24, 32×32 y custom | Iconos desalineados, renderizado borroso |
+| **Stroke Transformer** | Cambio de grosor (1.5px → 2px) sin distorsión | Iconos que parecen "rotos" visualmente |
+| **Corner Radius Engine** | Suavizado correcto por sistema (sharp vs continuo) | Iconos que no pasan el System Score |
+| **Padding Calculator** | Zonas de seguridad por sistema (iOS 2px, Material 2px) | Recortes en implementación real |
+| **Weight Interpolator** | Slider Thin↔Bold genera pesos intermedios válidos | SVG inválido o nodos desconectados |
+| **SVG Path Optimizer** | Reducción de nodos sin pérdida visual | Archivos pesados o artefactos visuales |
+
+### Estrategia
+
+```
+tests/
+├── unit/
+│   ├── geometry/
+│   │   ├── grid-mapper.test.ts
+│   │   ├── stroke-transformer.test.ts
+│   │   ├── corner-radius.test.ts
+│   │   ├── padding-calculator.test.ts
+│   │   └── weight-interpolator.test.ts
+│   ├── svg/
+│   │   ├── path-optimizer.test.ts
+│   │   ├── svg-parser.test.ts
+│   │   └── svg-validator.test.ts
+│   └── export/
+│       ├── font-generator.test.ts
+│       ├── code-emitter.test.ts
+│       └── zip-bundler.test.ts
+```
+
+### Reglas
+
+- **Cobertura mínima:** 95% en `geometry/` y `svg/` — son módulos matemáticos sin ambigüedad
+- **Tests paramétricos:** Cada función geométrica debe testarse con al menos 3 sistemas (Material, iOS, Fluent) × 3 complejidades (simple, medio, complejo)
+- **Snapshot testing de paths SVG:** Comparar el output SVG path-by-path contra golden files aprobadas
+
+> [!IMPORTANT]
+> Los tests unitarios del motor geométrico son la línea de defensa principal. Un bug aquí genera iconos silenciosamente incorrectos que el usuario pagará y luego descubrirá que no encajan.
+
+---
+
+## Capa 2: Integration Tests — Pipeline Completo
+
+Validar que el flujo `Prompt/SVG → Transformación → Exportación` funciona de extremo a extremo.
+
+### Escenarios críticos
+
+| # | Escenario | Entrada | Salida esperada |
+|:--|:---|:---|:---|
+| 1 | **Happy path Material** | SVG simple + schema Material | Bundle con SVG 24×24, componente React, WOFF2 |
+| 2 | **Happy path iOS** | SVG simple + schema iOS | Bundle con SVG SF Symbols, componente Swift |
+| 3 | **Cross-platform bundle** | SVG simple + "todas las plataformas" | 3 bundles independientes, cada uno válido |
+| 4 | **Custom schema** | SVG + reglas custom (32px, 3px stroke) | Bundle que cumple reglas exactas del usuario |
+| 5 | **Simplificación automática** | SVG complejo (50+ nodos) para 24px | SVG simplificado + mensaje de advertencia |
+| 6 | **Icono ya existente re-adaptado** | SVG optimizado para Material → re-export iOS | Transformación correcta sin doble-procesado |
+
+### Herramientas recomendadas
+
+- **Framework:** Vitest (si TypeScript) o Jest
+- **SVG Validation:** Validación W3C programática + custom validators
+- **Font Validation:** `fontkit` o `opentype.js` para verificar que TTF/WOFF2 generados son parseables
+- **Code Validation:** Compilación real del código emitido (TSC para TypeScript, Swift compiler check para iOS)
+
+> [!WARNING]
+> El escenario #6 (re-adaptación) es especialmente propenso a bugs. Si un SVG ya fue optimizado para Material (24×24, 2px stroke) y se pide para iOS, el motor no debe aplicar la transformación sobre valores ya transformados. Necesita detectar el estado base.
+
+---
+
+## Capa 3: Conformance Tests — Validación de Design Systems
+
+Esto es lo que diferencia a IconCraft AI de cualquier generador SVG genérico. Cada icono generado **debe pasar** las reglas oficiales del sistema de destino.
+
+### System Schemas como Test Fixtures
+
+```typescript
+// schemas/material.schema.ts
+export const MaterialDesignRules = {
+  grid: { width: 24, height: 24 },
+  safeZone: { padding: 2 }, // 2px por lado
+  stroke: { default: 2, min: 1.5, max: 2.5 },
+  cornerRadius: { min: 0, max: 2, style: 'rounded' },
+  opticalBalance: true,
+  pixelPerfect: true, // todos los nodos en coordenadas enteras
+};
+
+// schemas/ios-sf.schema.ts
+export const SFSymbolsRules = {
+  weights: ['ultralight', 'thin', 'light', 'regular', 'medium', 'semibold', 'bold', 'heavy', 'black'],
+  scales: ['small', 'medium', 'large'],
+  alignment: 'optical-center',
+  continuousCurves: true,
+  variableStroke: true,
+};
+
+// schemas/fluent.schema.ts
+export const FluentRules = {
+  grid: { width: 32, height: 32 },
+  stroke: { default: 1.5 },
+  style: 'geometric-flat',
+  cornerRadius: { min: 0, max: 1 },
+};
+```
+
+### Tests de conformidad
+
+```typescript
+describe('System Conformance', () => {
+  // Para cada icono de test × cada sistema
+  ICON_TEST_SUITE.forEach(icon => {
+    SYSTEMS.forEach(system => {
+      it(`${icon.name} debe cumplir ${system.name} al 100%`, () => {
+        const adapted = engine.adapt(icon.svg, system.schema);
+        const score = validator.score(adapted, system.schema);
+        
+        expect(score.grid).toBe(100);
+        expect(score.stroke).toBe(100);
+        expect(score.padding).toBe(100);
+        expect(score.overall).toBeGreaterThanOrEqual(95);
+      });
+    });
+  });
+});
+```
+
+### Golden Icon Suite
+
+Mantener una carpeta de **30-50 iconos de referencia** que cubran:
+- Formas simples (flechas, checks, cruces)
+- Formas medias (carrito de compras, tarjeta de crédito, usuario)
+- Formas complejas (mapa, gráfico, dashboard)
+- Edge cases (líneas muy finas, curvas cerradas, formas asimétricas)
+
+Estos iconos se testean contra todos los sistemas en cada commit.
+
+---
+
+## Capa 4: UI/E2E Tests — Workbench Artifact
+
+El Workbench es la cara visible del producto. Los bugs aquí destruyen la confianza del usuario.
+
+### Qué testar
+
+| Interacción | Validación |
+|:---|:---|
+| **Cambio de tab** (Material → iOS → Fluent) | El SVG se re-renderiza, el score se actualiza, no hay flash/flicker |
+| **Slider Thin↔Bold** | El SVG muta en tiempo real, sin lag perceptible (<100ms) |
+| **Botón "Rayos X"** | La rejilla se superpone correctamente al canvas |
+| **Zoom del canvas** | El SVG mantiene nitidez (no rasteriza) |
+| **Code Preview** | Syntax highlighting correcto, código copy-pasteable y válido |
+| **Responsive** | El Workbench funciona en viewports de 768px a 1920px+ |
+
+### Herramientas recomendadas
+
+- **E2E:** Playwright (cross-browser, headless, buenas APIs de screenshot)
+- **Visual Regression:** Playwright visual comparisons o Percy
+- **Performance:** Lighthouse CI para métricas de renderizado
+
+### Tests de regresión visual
+
+```typescript
+test('Workbench: cambio de tab Material → iOS no causa regresión visual', async ({ page }) => {
+  await page.goto('/workbench?icon=credit-card');
+  await page.click('[data-tab="material"]');
+  await expect(page).toHaveScreenshot('workbench-material.png');
+  
+  await page.click('[data-tab="ios"]');
+  await expect(page).toHaveScreenshot('workbench-ios.png');
+});
+```
+
+> [!TIP]
+> Usar `toHaveScreenshot()` con un threshold de 0.1% para detectar cambios sutiles en el renderizado SVG que un humano podría no notar pero que indican un bug geométrico.
+
+---
+
+## Capa 5: Transaction Tests — Pagos y Entrega
+
+### Escenarios críticos
+
+| # | Escenario | Resultado esperado |
+|:--|:---|:---|
+| 1 | Pago exitoso | Bundle descargable, email de confirmación |
+| 2 | Pago rechazado | No se liberan activos, UI muestra error claro |
+| 3 | Pago exitoso + descarga falla | Retry automático, link de descarga persistente |
+| 4 | Doble clic en "Pagar" | Solo se cobra una vez (idempotencia) |
+| 5 | Cross-platform add-on | Se cobra $1 extra, se entregan todos los bundles |
+| 6 | Inyección directa en assets | Archivos en la ruta correcta, sin sobreescribir existentes |
+
+### Reglas
+
+- **Nunca entregar antes de confirmar pago** — validar webhook de Stripe/proveedor
+- **Idempotencia obligatoria** — cada transacción tiene un `idempotency_key`
+- **Audit log** — registrar cada transacción con timestamp, user, bundle, monto, estado
+- **Tests con mocks de payment provider** — no tocar Stripe real en CI
+
+> [!CAUTION]
+> Los tests de transacción deben cubrir **todos** los estados de error del proveedor de pagos. Un bug aquí puede significar cobrar sin entregar (destruye confianza) o entregar sin cobrar (pérdida directa de revenue).
+
+---
+
+## Capa 6: CI/CD — Gates de Calidad
+
+### Pipeline propuesto
+
+```mermaid
+graph LR
+    A["Push / PR"] --> B["Lint + Format"]
+    B --> C["Unit Tests"]
+    C --> D["Integration Tests"]
+    D --> E["Conformance Tests"]
+    E --> F["Visual Regression"]
+    F --> G["Build Check"]
+    G --> H{"All Green?"}
+    H -->|Sí| I["Deploy to Staging"]
+    H -->|No| J["Block Merge ❌"]
+    
+    style H fill:#1a1a2e,stroke:#e94560,color:#fff
+    style I fill:#16213e,stroke:#0f3460,color:#fff
+    style J fill:#3d0000,stroke:#e94560,color:#fff
+```
+
+### Quality Gates (ningún PR se mergea sin pasar todos)
+
+| Gate | Herramienta | Criterio de paso |
+|:---|:---|:---|
+| **Linting** | ESLint + Prettier | 0 errores, 0 warnings |
+| **Type Safety** | TypeScript strict mode | 0 errores de tipo |
+| **Unit Tests** | Vitest | 100% pass, ≥95% cobertura en `geometry/` y `svg/` |
+| **Integration Tests** | Vitest | 100% pass |
+| **Conformance Tests** | Custom validator | Score ≥95% para todos los iconos × sistemas |
+| **Visual Regression** | Playwright screenshots | 0 diffs no aprobados |
+| **Bundle Size** | `size-limit` | SVG <2KB, font <50KB por icono, bundle JS <100KB |
+| **Security** | `npm audit` + Snyk | 0 vulnerabilidades high/critical |
+
+---
+
+## Estructura de Directorios Completa para QA
+
+```
+IconCraftAI/
+├── src/
+│   ├── engine/          # Motor de transformación
+│   ├── schemas/         # Reglas de Design Systems
+│   ├── exporters/       # Generadores SVG, Font, Code
+│   ├── ui/              # Workbench Artifact
+│   └── payments/        # Lógica de transacciones
+├── tests/
+│   ├── unit/
+│   │   ├── geometry/    # Tests del motor geométrico
+│   │   ├── svg/         # Tests del parser/optimizer SVG
+│   │   └── export/      # Tests de generadores
+│   ├── integration/
+│   │   ├── pipelines/   # Tests end-to-end del pipeline
+│   │   └── payments/    # Tests de transacciones (mocked)
+│   ├── conformance/
+│   │   ├── golden-icons/  # Suite de iconos de referencia
+│   │   ├── schemas/       # Fixtures de schemas
+│   │   └── scoring/       # Tests del System Score
+│   ├── e2e/
+│   │   ├── workbench/   # Tests de UI del Artifact
+│   │   └── screenshots/ # Golden screenshots para regresión
+│   └── fixtures/
+│       ├── svgs/        # SVGs de entrada para tests
+│       ├── fonts/       # Fonts de referencia
+│       └── code/        # Código esperado de salida
+├── .github/
+│   └── workflows/
+│       └── ci.yml       # Pipeline CI/CD
+├── vitest.config.ts
+├── playwright.config.ts
+└── .eslintrc.js
+```
+
+---
+
+## Herramientas Recomendadas (Stack Completo)
+
+| Categoría | Herramienta | Justificación |
+|:---|:---|:---|
+| **Test Runner** | Vitest | Rápido, nativo TypeScript, compatible con Jest API |
+| **E2E / Visual** | Playwright | Cross-browser, screenshots nativos, estable |
+| **Linting** | ESLint + `@typescript-eslint` | Estándar de la industria para TS |
+| **Formatting** | Prettier | Consistencia automática |
+| **Type Checking** | TypeScript strict | Previene bugs en tiempo de compilación |
+| **SVG Validation** | SVGO + custom W3C validator | Garantiza SVGs válidos y optimizados |
+| **Font Validation** | `opentype.js` / `fontkit` | Verifica integridad de TTF/WOFF2 |
+| **CI** | GitHub Actions | Integración nativa con el repo |
+| **Coverage** | `v8` (integrado en Vitest) | Reporte por módulo con thresholds |
+| **Bundle Size** | `size-limit` | Previene regresiones de tamaño |
+| **Security** | `npm audit` + Snyk | Detección de vulnerabilidades en deps |
+
+---
+
+## Verificación del Plan
+
+### Automatizada
+- `npm run test:unit` — ejecuta todos los tests unitarios
+- `npm run test:integration` — ejecuta pipeline E2E
+- `npm run test:conformance` — valida todos los golden icons × todos los sistemas
+- `npm run test:e2e` — ejecuta Playwright contra el Workbench
+- `npm run test:all` — ejecuta todo lo anterior en secuencia
+- `npm run lint` — lint + type check + format check
+
+### Manual (pre-release)
+- Revisión visual de 10 iconos representativos en cada sistema
+- Test de pago real en Stripe sandbox
+- Prueba de inyección directa en un proyecto real (Angular + Swift)
+- Prueba de descarga del ZIP en macOS, Windows, Linux
+
+---
+
+## Prioridad de Implementación
+
+| Fase | Qué | Cuándo |
+|:---|:---|:---|
+| **P0 — Fundación** | Unit tests del motor geométrico + TypeScript strict + ESLint | Antes de escribir la primera línea de lógica |
+| **P1 — Pipeline** | Integration tests del flujo SVG→Export + CI básico | Al completar el motor |
+| **P2 — Conformidad** | Golden icon suite + conformance tests | Al tener los 3 schemas (Material, iOS, Fluent) |
+| **P3 — UI** | E2E + visual regression del Workbench | Al tener UI funcional |
+| **P4 — Pagos** | Transaction tests con mocks de Stripe | Al integrar pagos |
+| **P5 — Hardening** | Security audit + bundle size limits + performance benchmarks | Pre-launch |
