@@ -1,0 +1,49 @@
+{
+  "name": "iconcraftai",
+  "version": "1.0.0",
+  "description": "IconCraft AI — Universal Asset Engine for Design Systems",
+  "type": "commonjs",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/ tests/ && prettier --check src/ tests/",
+    "lint:fix": "eslint src/ tests/ --fix && prettier --write src/ tests/",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:unit": "vitest run tests/unit/",
+    "test:integration": "vitest run tests/integration/",
+    "test:conformance": "vitest run tests/conformance/",
+    "test:e2e": "playwright test",
+    "test:coverage": "vitest run --coverage",
+    "test:all": "npm run lint && npm run typecheck && npm run test && npm run test:e2e"
+  },
+  "keywords": [
+    "icons",
+    "design-system",
+    "svg",
+    "material",
+    "ios",
+    "fluent",
+    "mcp"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.59.1",
+    "@types/node": "^25.6.1",
+    "@vitest/coverage-v8": "^4.1.5",
+    "eslint": "^10.3.0",
+    "prettier": "^3.8.3",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.59.2",
+    "vitest": "^4.1.5"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0"
+  }
+}

@@ -1,0 +1,148 @@
+Esta es una evolución estratégica clave. Si abrimos el abanico más allá de Material Design, el producto pasa de ser una herramienta de nicho a convertirse en la **Infraestructura Universal de Activos para Interfaces**.
+
+Al no limitarnos, el valor real del negocio ya no es el "estilo", sino la **"Adaptabilidad Técnica"**. Tu herramienta se convierte en el traductor universal: "Dibuja una idea una vez y expórtala perfectamente para cualquier sistema de diseño (Apple, Microsoft, IBM, o el tuyo propio)".
+
+Aquí tienes el **PRD v4.0: El Motor Universal de Iconografía**, rediseñado para esta nueva visión.
+
+---
+
+# PRD: IconCraft AI – Universal Asset Engine
+
+**Estado:** Definición de Producto Multi-Sistema  
+**Interfaz Primaria:** Claude Service Plugin (MCP)  
+**Modelo de Monetización:** Pago Único por "Production Bundle" (Multi-Formato)
+
+---
+
+## 1. Visión del Producto
+**IconCraft AI** es un motor de ingeniería que garantiza la compatibilidad técnica absoluta de la iconografía con cualquier **Design System**. El usuario define el "destino" (Material, iOS, Fluent, Carbon o Custom) y el motor adapta automáticamente la geometría, los trazos y el código para que el activo sea nativo en ese ecosistema.
+
+---
+
+## 2. Los User Personas (Evolucionados)
+
+* **Vibe Coder:** Necesita que la IA genere activos que no rompan la estética del framework que está usando (ej. "Haz que este icono parezca de macOS").
+* **Front-end Dev:** Necesita exportaciones multiformato (SVG, WebFonts, Swift, Compose) sin configuración manual.
+* **Product Designer:** Necesita asegurar consistencia entre plataformas (iOS, Android, Web) usando una sola fuente de verdad.
+
+---
+
+## 3. El Problema (Generalizado)
+
+* **System Incompatibility:** Un icono diseñado para Android se ve "pesado" en iOS y "ajeno" en Windows debido a diferentes reglas de *padding*, grosores y radios de curvatura.
+* **The "One-Size-Fits-None" SVG:** Los SVGs genéricos no respetan las rejillas de píxeles específicas de cada sistema, causando renderizado borroso.
+* **Export Fatigue:** Generar manualmente los formatos necesarios para cada plataforma (SVG para web, PDF/Vector para iOS, XML para Android) es lento y propenso a errores.
+
+---
+
+## 4. El Producto: "The Adaptive Production Bundle"
+
+El pago único desbloquea un paquete de activos que se adapta al sistema de diseño elegido por el usuario:
+
+### A. Capa de Adaptación Geométrica (The Transformer)
+El motor aplica reglas específicas según el destino:
+* **Material (Google):** Grid 24x24, trazo 2px, esquinas redondeadas suaves.
+* **Apple (SF Symbols style):** Óptica centrada, trazos variables según el peso (weight), curvas continuas.
+* **Fluent (Microsoft):** Grid 32x32, trazo 1.5px, estilo más geométrico y plano.
+* **Custom (Agencia):** El usuario define sus propias reglas (ej. "Todos mis iconos deben ser de 32px y trazo de 3px").
+
+### B. Entregables del Pago Único ($1.99 - $2.99)
+1.  **SVG Universal:** Optimizado y reactivo.
+2.  **Icon Font (TTF/WOFF2):** Con ligaduras inteligentes.
+3.  **Código Nativo:**
+    * Web: Angular/React/Vue.
+    * Mobile: Swift (iOS) o Jetpack Compose (Android).
+    * Desktop: XAML o CSS Sprite.
+
+---
+
+## 5. Flujo de Usuario: "The Multi-Vibe Flow"
+
+1.  **Contexto:** El plugin detecta el proyecto (ej. una app de Swift para iOS o un dashboard en React).
+2.  **Prompt:** El usuario pide un icono.
+3.  **Selección de "Sabor" (Flavor):** En el Artifact de Claude, el usuario ve el mismo icono renderizado en 3 estilos: *"¿Lo quieres estilo Material, Apple o Fluent?"*.
+4.  **Ajuste Automático:** Al elegir "Apple", el motor re-calcula los nodos para que encajen en la rejilla de SF Symbols.
+5.  **Conversión:** El usuario paga y recibe el código exacto para su plataforma específica.
+
+---
+
+## 6. Especificaciones Técnicas para Antigravity
+
+El backend ahora debe manejar una **Librería de Reglas (System Schemas)**:
+
+* **Input:** Intención creativa (SVG/Prompt).
+* **Processor:** Aplica transformaciones lineales y de grosor basadas en el esquema elegido.
+* **Validator:** Chequea el "System Score" (¿Qué tan cerca está este icono de parecer un icono oficial de iOS/Material?).
+
+---
+
+## 7. Modelo de Negocio: "Engine as a Service"
+
+* **Pago Único:** Validación y exportación perfecta para un sistema.
+* **Cross-Platform Add-on (+$1.00):** Obtener el bundle optimizado para TODAS las plataformas a la vez (Web + iOS + Android).
+* **Custom Schema (Suscripción):** Para empresas que quieren subir su propio manual de marca y que la IA solo genere iconos que cumplan **sus** reglas específicas.
+
+---
+
+## 8. ¿Por qué esto es mejor negocio?
+
+1.  **Escalabilidad:** No dependes de que Google mantenga Material Design. Eres útil mientras existan sistemas de diseño.
+2.  **Target más amplio:** Captas a desarrolladores de iOS, Android, Windows y Web por igual.
+3.  **Mayor valor percibido:** Resolver la inconsistencia visual entre Android e iOS es un problema mucho más caro de resolver manualmente que solo crear un icono de Material.
+
+Para que **IconCraft AI** sea un éxito, la interacción no puede sentirse como "rellenar un formulario". Debe sentirse como una **conversación de ingeniería** donde el usuario tiene la visión y el plugin pone la precisión técnica.
+
+Aquí tienes el detalle de la **Interacción de Usuario (UX/UI)** para el PRD, diseñada para ser implementada en Claude mediante Artifacts y MCP.
+
+---
+
+## 9. Flujo de Interacción: "The Universal Vibe Journey"
+
+### Paso 1: Disparo de Intención (Natural Language)
+* **Usuario:** *"Claude, necesito un icono de 'pago con tarjeta' para mi app de iOS, pero que también me sirva para la web en Angular."*
+* **Acción del Plugin:** El plugin detecta el **doble destino** (iOS y Web) y la **metáfora visual** (pago con tarjeta).
+* **Respuesta de Claude:** *"Entendido. Estoy diseñando el icono con una base vectorial única que adaptaré a las guías de Apple (SF Symbols) y de Google (Material). Abriendo el Workbench de IconCraft..."*
+
+### Paso 2: El Workbench (Artifact Interactivo)
+Se abre una ventana lateral (Artifact) con una interfaz limpia que muestra:
+* **El "Master Vector":** El dibujo base generado por la IA.
+* **Selector de Sistemas (The Flavors):** Pestañas interactivas: **[Material] [iOS/SF] [Fluent] [Custom]**.
+* **Previsualización Dinámica:** Al cambiar de pestaña, el usuario ve cómo el icono "muta" (cambia el grosor del trazo, el redondeo de las esquinas y el tamaño del lienzo de 24px a 32px, por ejemplo).
+
+### Paso 3: El "Technical Check" (Feedback en tiempo real)
+Dentro del Artifact, el usuario puede interactuar con el diseño:
+* **Ajuste de "Vibra":** Un slider que va de *"Thin/Elegant"* a *"Bold/Solid"*. El motor recalcula el SVG en tiempo real.
+* **Validación Visual:** Un botón de "Rayos X" que superpone la rejilla de píxeles del sistema elegido para demostrar que el icono es **píxel-perfect**.
+
+### Paso 4: Configuración de Salida (The Dev-Check)
+Antes de pagar, el usuario confirma sus herramientas:
+* **Framework:** El plugin sugiere "Angular" (si detectó el proyecto) o permite elegir entre React, Swift, Vue, etc.
+* **Formato de Fuente:** Una casilla para activar: *"Generar también fuente WOFF2/TTF"*.
+
+### Paso 5: Transacción y Entrega (The "Aha!" Moment)
+* **Checkout:** Un botón de pago único ($2.99 por el bundle multiplataforma).
+* **Liberación de Activos:** Tras el pago, el Artifact se transforma en una **Consola de Descarga**:
+    1.  **Botón "Copy Code":** Copia el componente de Angular/React ya configurado.
+    2.  **Botón "Download Binaries":** Descarga un ZIP con el `.ttf`, `.woff2` y el `.svg` optimizado.
+    3.  **Inyección Directa:** Si el usuario usa Claude Engineer, el plugin le pregunta: *"¿Quieres que inserte el icono directamente en tu carpeta de assets?"*.
+
+---
+
+## 10. Reglas de Interacción para el Plugin (Contexto para Antigravity)
+
+Para que el comportamiento sea consistente, el plugin debe seguir estas heurísticas:
+
+1.  **Anticipación de Errores:** Si el usuario pide un icono muy complejo (muchos detalles), el plugin debe decir: *"Este diseño es demasiado complejo para 24px y se verá borroso. He simplificado las líneas para garantizar claridad técnica."*
+2.  **Coherencia de Proyecto:** El plugin recuerda los ajustes anteriores. Si el último icono fue "Style: Fluent, Weight: 1.5px", el siguiente icono se generará con esos mismos parámetros por defecto.
+3.  **Transparencia de Valor:** Siempre debe explicar **qué** está corrigiendo. *"He ajustado el padding lateral a 2px para cumplir con la zona de seguridad de iOS"*. Esto justifica el pago.
+
+---
+
+## 11. UI del Artifact (Lo que Antigravity debe renderizar)
+
+| Elemento | Comportamiento |
+| :--- | :--- |
+| **Canvas Central** | Renderiza el SVG vivo. Permite zoom para ver la rejilla. |
+| **Tabs de Sistema** | Cambian el esquema de validación (ej. de 24px a 32px). |
+| **Material Score** | Un indicador de 0-100% de cumplimiento del estándar seleccionado. |
+| **Code Preview** | Un área de texto con sintaxis resaltada (Syntax Highlighting) que muestra el componente de Angular/React antes de comprar. |
